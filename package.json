@@ -1,0 +1,19 @@
+{
+  "name": "supabase-seen-by",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@slonik/migrator": "^0.11.2",
+    "es-dirname": "^0.1.0",
+    "es-main": "^1.0.2",
+    "fastify": "^4.1.0",
+    "slonik": "^28.1.1"
+  }
+}
