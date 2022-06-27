@@ -13,7 +13,7 @@ If you want to run the code in this repository yourself, you'll need a few thing
 - [GNU Make][gnu-make] for orchestration
 - [NodeJS][node] installed, with [PNPM][pnpm]
   - To install dependencies and run local scripts
-- A [Kubernetes][kubernetes] cluster with a reasonable dynamic `PersistentVolume` provisioner
+- A [Kubernetes][k8s] cluster with a reasonable dynamic `PersistentVolume` provisioner
   - To set up Postgres [`Deployment`][k8s-deployment]s and run benchmark [`Job`][k8s-job]s
   - You are expected to either have `kubectl` in your `PATH` or export that variable to env (`KUBECTL=/path/to/your/kubectl`)
   - You must specify the [StorageClass][k8s-storageclass] of the PVCs that will be created with the ENV variable `K8S_STORAGE_CLASS`
@@ -42,3 +42,4 @@ This will:
 [k8s-deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
 [k8s-job]: https://kubernetes.io/docs/concepts/workloads/controllers/job/
 [gnu-make]: https://www.gnu.org/software/make
+[k8s-storageclass]: https://kubernetes.io/docs/concepts/storage/storage-classes/
