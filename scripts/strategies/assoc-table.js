@@ -36,9 +36,9 @@ INSERT INTO posts_seen_by_users
   (user_id, post_id, seen_count)
 VALUES
   (${userId}, ${postId}, 1)
-ON CONFLICT
+ON CONFLICT (post_id, user_id)
 DO UPDATE
-  SET seen_count = seen_count + 1 WHERE post_id = ${postId}
+  SET seen_count = posts_seen_by_users.seen_count + 1 WHERE posts_seen_by_users.post_id = ${postId}
 RETURNING *
 `);
       if (!row) { throw new Error("failed to update posts and/or return results!"); }
@@ -48,7 +48,7 @@ RETURNING *
       if (!row) { throw new Error("failed to retrieve summed seen_count"); }
 
       return {
-        count: row.seen_count
+        count: row.seen_count,
       };
     },
   };
