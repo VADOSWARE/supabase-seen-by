@@ -7,6 +7,7 @@ import esDirname from "es-dirname";
 export const SEEN_BY_STRATEGY_NAME = {
   SimpleCounter: "simple-counter",
   SimpleHStore: "simple-hstore",
+  AssocTable: "assoc-table",
   HLL: "hll",
 };
 
