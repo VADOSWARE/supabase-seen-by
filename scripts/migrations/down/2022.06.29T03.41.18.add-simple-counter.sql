@@ -1,5 +1,5 @@
 BEGIN;
 
-ALTER TABLE posts DROP COLUMN count;
+ALTER TABLE posts DROP COLUMN seen_count;
 
 COMMIT;

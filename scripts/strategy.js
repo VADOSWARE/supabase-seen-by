@@ -6,7 +6,7 @@ import esDirname from "es-dirname";
 // Enum of strategies to use
 export const SEEN_BY_STRATEGY_NAME = {
   SimpleCounter: "simple-counter",
-  SimpleUserStorage: "simple-user-storage",
+  SimpleHStore: "simple-hstore",
   HLL: "hll",
 };
 
@@ -42,7 +42,7 @@ export async function setupSeenByStrategy(args) {
 
   // Ensure strategy is valid
   if (!Object.values(SEEN_BY_STRATEGY_NAME).includes(strategy)) {
-    throw new Error(`Invalid/unrecognized seen by strategy [${strategy}]`);
+    throw new Error(`Invalid/unrecognized seen by strategy [${strategy}] (valid values are ${Object.values(SEEN_BY_STRATEGY_NAME).map(v => "'" + v + "'").join(",")})`);
   }
 
   // Use hardcoded path to strategy JS (strategy file must be named properly)

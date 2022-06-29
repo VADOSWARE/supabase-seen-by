@@ -31,6 +31,31 @@ This will:
    - Run an individual test (`make test-run`)
    - Extract results from a test run to your local directory (`make test-extract-results`)
 
+### Environment Variables
+
+You can change the tests with the following environment variables
+
+| ENV Var                     | Default          | Description                                                             |
+|-----------------------------|------------------|-------------------------------------------------------------------------|
+| `SEEN_BY_STRATEGY`          | `simple-counter` | The strategy to use for performing "seen-by" operations                 |
+| `TEST_USER_COUNT`           | `1000`           | Number of users that will be created for the test                       |
+| `TEST_POST_COUNT`           | `1000`           | Number of posts that will be created fo rhte test                       |
+| `TEST_RECORD_SEEN_BY_COUNT` | `1000`           | How many times to *record* a "seen by" for posts (simulates a new view) |
+| `TEST_GET_SEEN_BY_COUNT`    | `2000`           | How many times to *request* a "seen by" reading (simulates a page load) |
+
+### Strategies
+
+Since this repo is about testing ways to solve the "seen by" problem here are the simple strategies we implemented:
+
+| Strategy            | Description                                                                          |
+|---------------------|--------------------------------------------------------------------------------------|
+| `simple-counter`    | Count on tuples in `posts` (without attribution)                                     |
+| `simple-hstore`     | Use a `hstore` on every tuple in `posts`                                             |
+| `assoc`             | Use an associative table, `SUM(*)`ing as necessary                                   |
+| `assoc+hyperloglog` | Use a [HyperLogLog][wiki-hll] column for seen-by, with raw data in associative table |
+
+
+
 ## Development
 
 If you're interested in improving/modifying this project, here are a few tips to get you started
@@ -79,6 +104,7 @@ $ make api-local
 To run a test run, once you have the local DB running, run the `test-local` make target
 
 ```console
+$ export SEEN_BY_STRATEGY=<the stategy you want>
 $ make bench
 ```
 
@@ -88,3 +114,4 @@ This will run the tests script against your local database.
 [node]: https://nodejs.org
 [pnpm]: https://pnpm.io
 [gnu-make]: https://www.gnu.org/software/make
+[wiki-hll]: https://en.wikipedia.org/wiki/HyperLogLog

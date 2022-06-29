@@ -48,7 +48,10 @@ export default async function runBenchmark() {
   let usersJSONPath = process.env.TEST_USERS_JSON_PATH;
   if (!usersJSONPath) {
     usersJSONPath = path.join(tmpdir, "users.json");
-    await generateUsers({ outputFilePath: usersJSONPath });
+    await generateUsers({
+      count: process.env.TEST_USER_COUNT ? parseInt(process.env.TEST_USER_COUNT, 10) : undefined,
+      outputFilePath: usersJSONPath,
+    });
   }
   logger.info(`Using users from JSON file @ [${usersJSONPath}]`);
   users = JSON.parse(await readFile(usersJSONPath));
@@ -65,6 +68,7 @@ export default async function runBenchmark() {
     postsJSONPath = path.join(tmpdir, "posts.json");
     await generatePosts({
       userCount: users.length,
+      postCount: process.env.TEST_POST_COUNT ? parseInt(process.env.TEST_POST_COUNT, 10) : undefined,
       outputFilePath: postsJSONPath,
     });
   }
@@ -108,9 +112,9 @@ VALUES
   apiCalls = JSON.parse(await readFile(apiCallsJSONPath));
 
   // Execute the API calls with autocannon
-  logger.info(`starting executions (${apiCalls.length} API calls) against [${targetBaseURL}]...`);
+  logger.info(`starting executions against [${targetBaseURL}]...`);
   const results = await autocannon({
-    workers: parseInt(process.env.TEST_WORKER_COUNT ?? `${DEFAULT_TEST_WORKER_COUNT}`, 10),
+    // workers: parseInt(process.env.TEST_WORKER_COUNT ?? `${DEFAULT_TEST_WORKER_COUNT}`, 10),
     url: targetBaseURL,
     bailout: 3,
     duration: 30,

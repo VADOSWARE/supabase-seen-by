@@ -64,7 +64,7 @@ setup: ensure-tool-pnpm
 
 bench:
 	echo -e "=> running benchmarks..."
-	DB_URL=$(DB_URL) \
+	@DB_URL=$(DB_URL) \
 		$(PNPM) bench
 
 #########
@@ -125,13 +125,13 @@ db-migration:
 ifeq (,$(NAME))
 	$(error "NAME not set")
 else
-	DB_URL=$(DB_URL) \
+	@DB_URL=$(DB_URL) \
 	DB_MIGRATIONS_DIR=$(DB_MIGRATIONS_DIR) \
 		$(PNPM) run "db:migration:create" --name $(NAME).sql
 endif
 
 db-local-migrate: ensure-tool-pnpm
-	DB_URL=$(DB_URL) \
+	@DB_URL=$(DB_URL) \
 	DB_MIGRATIONS_DIR=$(DB_MIGRATIONS_DIR) \
 		$(PNPM) run "db:migrate:up"
 
