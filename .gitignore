@@ -11,6 +11,7 @@
 # compiled output
 /dist
 /node_modules
+/output
 
 # Logs
 logs

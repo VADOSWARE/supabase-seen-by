@@ -35,6 +35,61 @@ This will:
    - Run an individual test (`make test-run`)
    - Extract results from a test run to your local directory (`make test-extract-results`)
 
+## Development
+
+If you're interested in improving/modifying this project, here are a few tips to get you started
+
+### Editing the code
+
+The code can be edited however you'd like -- with whatever tools you'd like
+
+### Working with a local DB
+
+You can do various operations with the local DB, for example starting it:
+
+```console
+$ make db-local
+```
+
+Or creating a new migration
+
+```console
+$ make db-migration NAME=<migration name goes here with no spaces>
+```
+
+Or migrating/reverting
+
+```console
+$ make db-local-migrate
+$ make db-local-revert
+```
+
+To access the local database with `psql`:
+
+```console
+$ make db-local-psql
+```
+
+### Running the API server locally
+
+The API server that is used as part of the tests to simulate a real service can be run locally (assuming you have the local DB running):
+
+```console
+$ make api-local
+```
+
+### Running the benchmark
+
+To run a test run, once you have the local DB running, run the `test-local` make target
+
+```console
+$ make test-local
+```
+
+This will run the tests script against your local database.
+
+To run the test suite agaisnt a Kubernetes environment, run the usual `test` make target (this requires building images and making them available to the kubernetes cluster, etc).
+
 [k8s]: https://kubernetes.io
 [pg]: https://postgresql.org
 [node]: https://nodejs.org

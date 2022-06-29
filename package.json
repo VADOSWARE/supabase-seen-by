@@ -3,17 +3,27 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "bench": "node scripts/bench.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "api:server": "node scripts/server.js",
+    "db:migration:create": "node scripts/migration.js create",
+    "db:migrate:up": "node scripts/migration.js up",
+    "db:migrate:down": "node scripts/migration.js down"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@slonik/migrator": "^0.11.2",
+    "autocannon": "^7.9.0",
     "es-dirname": "^0.1.0",
     "es-main": "^1.0.2",
+    "fast-lorem-ipsum": "^1.2.0",
     "fastify": "^4.1.0",
-    "slonik": "^28.1.1"
+    "pino": "^8.1.0",
+    "slonik": "^28.1.1",
+    "validator": "^13.7.0"
   }
 }

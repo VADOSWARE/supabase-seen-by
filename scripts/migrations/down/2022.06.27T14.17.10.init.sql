@@ -1,0 +1,12 @@
+BEGIN;
+
+DROP TABLE posts;
+DROP TABLE users;
+
+DROP DOMAIN email;
+
+DROP EXTENSION IF EXISTS "uuid-ossp";
+
+DROP EXTENSION IF EXISTS citext;
+
+COMMIT;
