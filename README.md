@@ -13,10 +13,6 @@ If you want to run the code in this repository yourself, you'll need a few thing
 - [GNU Make][gnu-make] for orchestration
 - [NodeJS][node] installed, with [PNPM][pnpm]
   - To install dependencies and run local scripts
-- A [Kubernetes][k8s] cluster with a reasonable dynamic `PersistentVolume` provisioner
-  - To set up Postgres [`Deployment`][k8s-deployment]s and run benchmark [`Job`][k8s-job]s
-  - You are expected to either have `kubectl` in your `PATH` or export that variable to env (`KUBECTL=/path/to/your/kubectl`)
-  - You must specify the [StorageClass][k8s-storageclass] of the PVCs that will be created with the ENV variable `K8S_STORAGE_CLASS`
 - [NodeJS][node]
 
 ## Running the tests
@@ -83,18 +79,12 @@ $ make api-local
 To run a test run, once you have the local DB running, run the `test-local` make target
 
 ```console
-$ make test-local
+$ make bench
 ```
 
 This will run the tests script against your local database.
 
-To run the test suite agaisnt a Kubernetes environment, run the usual `test` make target (this requires building images and making them available to the kubernetes cluster, etc).
-
-[k8s]: https://kubernetes.io
 [pg]: https://postgresql.org
 [node]: https://nodejs.org
 [pnpm]: https://pnpm.io
-[k8s-deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
-[k8s-job]: https://kubernetes.io/docs/concepts/workloads/controllers/job/
 [gnu-make]: https://www.gnu.org/software/make
-[k8s-storageclass]: https://kubernetes.io/docs/concepts/storage/storage-classes/
