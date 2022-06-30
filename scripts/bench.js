@@ -1,7 +1,12 @@
 import * as process from "process";
 import * as path from "path";
 import * as os from "os";
+import { createReadStream } from "node:fs";
+import * as readline from "node:readline";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { pipeline } from "node:stream/promises";
+import esDirname from "es-dirname";
+import JSONStream from "JSONStream";
 
 import { sql } from "slonik";
 import getLogger from "pino";
@@ -12,7 +17,6 @@ import esMain from "es-main";
 
 import { generateUsers } from "./generate/users.js";
 import { generatePosts } from "./generate/posts.js";
-import { generateAPICalls } from "./generate/api-calls.js";
 import { buildAPI } from "./api.js";
 
 const DEFAULT_TEST_RECORD_SEEN_BY_COUNT = 1000;
@@ -21,6 +25,7 @@ const DEFAULT_TEST_WORKER_COUNT = 2;
 const DEFAULT_TEST_TARGET_BASE_URL = "http://localhost:5001";
 
 const DEFAULT_TEST_SERVER_PORT = 5001;
+const DEFAULT_TEST_DURATION_SECONDS = 30;
 
 export default async function runBenchmark() {
   const logger = getLogger();
@@ -43,89 +48,116 @@ export default async function runBenchmark() {
   // Clear out existing tables ahead of time
   await api.db.query(sql`TRUNCATE posts, users, posts_seen_by_users;`);
 
+  ///////////////////////////
+  // Generate & load users //
+  ///////////////////////////
+
   // Generate users, if necessary
+  // FUTURE: reduce to PG-only w/ generate_series
   let users;
   let usersJSONPath = process.env.TEST_USERS_JSON_PATH;
   if (!usersJSONPath) {
     usersJSONPath = path.join(tmpdir, "users.json");
+    logger.info(`TEST_USERS_JSON_PATH not specified, generating user seed list @ [${usersJSONPath}]`);
     await generateUsers({
       count: process.env.TEST_USER_COUNT ? parseInt(process.env.TEST_USER_COUNT, 10) : undefined,
       outputFilePath: usersJSONPath,
     });
   }
-  logger.info(`Using users from JSON file @ [${usersJSONPath}]`);
-  users = JSON.parse(await readFile(usersJSONPath));
 
-  // Ideally we'd use COPY here but slonik's copyFromBinary doesn't seem to work...
-  for (const u of users) {
-    await api.db.query(sql`INSERT INTO users (id, email, name, about_html) VALUES (${u.id}, ${u.email}, ${u.name}, ${u.about_html})`);
+  // Load all user JSON (Ideally we'd use COPY here but slonik's copyFromBinary doesn't seem to work...)
+  // @ 100k users this takes ~5m 30s
+  logger.info(`loading users from JSON file @ [${usersJSONPath}]`);
+  const userJSONFileStream = createReadStream(usersJSONPath);
+  const userJSONLines = readline.createInterface({
+    input: userJSONFileStream,
+    crlfDelay: Infinity
+  });
+  for await (const line of userJSONLines) {
+    try {
+      const user = JSON.parse(line);
+      await api.db.query(
+        sql`INSERT INTO users (id, email, name, about_html) VALUES (${user.id}, ${user.email}, ${user.name}, ${user.about_html})`,
+      );
+    } catch (err) {
+      logger.error({ err, data: { line } }, "failed to parse line");
+    }
   }
 
+  ///////////////////////////
+  // Generate & load posts //
+  ///////////////////////////
+
   // Generate posts, if necessary
+  // FUTURE: reduce to PG-only w/ generate_series
   let posts;
   let postsJSONPath = process.env.TEST_POSTS_JSON_PATH;
   if (!postsJSONPath) {
     postsJSONPath = path.join(tmpdir, "posts.json");
     await generatePosts({
-      userCount: users.length,
+      userCount: process.env.TEST_USER_COUNT ? parseInt(process.env.TEST_USER_COUNT, 10) : undefined,
       postCount: process.env.TEST_POST_COUNT ? parseInt(process.env.TEST_POST_COUNT, 10) : undefined,
       outputFilePath: postsJSONPath,
     });
   }
-  posts = JSON.parse(await readFile(postsJSONPath));
-  logger.info(`Using posts from JSON file @ [${postsJSONPath}]`);
 
-  // Quick and dirty!
-  for (const p of posts) {
-    await api.db.query(sql`
+  // Load all post JSON (Ideally we'd use COPY here but slonik's copyFromBinary doesn't seem to work...)
+  // @ 100k posts this takes ~5m 30s
+  logger.info(`loading posts from JSON file @ [${postsJSONPath}]`);
+  const postJSONFileStream = createReadStream(postsJSONPath);
+  const postJSONLines = readline.createInterface({
+    input: postJSONFileStream,
+    crlfDelay: Infinity
+  });
+  for await (const line of postJSONLines) {
+    try {
+      const post = JSON.parse(line);
+      await api.db.query(sql`
 INSERT INTO posts
 (id, title, content, main_image_src, main_link_src, created_by)
 VALUES
-(${p.id}, ${p.title}, ${p.content}, ${p.main_image_src}, ${p.main_link_src}, ${p.created_by})
+(${post.id}, ${post.title}, ${post.content}, ${post.main_image_src}, ${post.main_link_src}, ${post.created_by})
 `);
+    } catch (err) {
+      logger.error({ err, data: { line } }, "failed to parse line");
+    }
   }
 
-  // Generate actions (API Calls) to run
-  let apiCalls;
-  const apiRecordSeenByCount = parseInt(
-    process.env.TEST_RECORD_SEEN_BY_COUNT ?? `${DEFAULT_TEST_RECORD_SEEN_BY_COUNT}`,
-    10,
-  );
-  const apiGetSeenByCount = parseInt(
-    process.env.TEST_GET_SEEN_BY_COUNT ?? `${DEFAULT_TEST_GET_SEEN_BY_COUNT}`,
+  //////////////
+  // Run Test //
+  //////////////
+
+  // Parse test configuration
+  const duration = parseInt(
+    process.env.TEST_DURATION_SECONDS ?? `${DEFAULT_TEST_DURATION_SECONDS}`,
     10,
   );
 
-  // Generate API calls, if necessary
-  let apiCallsJSONPath = process.env.TEST_APICALLS_JSON_PATH;
-  if (!apiCallsJSONPath) {
-    apiCallsJSONPath = path.join(tmpdir, "apiCalls.json");
-    await generateAPICalls({
-      userCount: users.length,
-      postCount: posts.length,
-      apiRecordSeenByCount,
-      apiGetSeenByCount,
-      outputFilePath: apiCallsJSONPath,
-    });
+  const currentDir = path.resolve(await esDirname());
+  const setupRequestScriptPath = path.join(currentDir, "setup-request.cjs");
+  logger.info(`Using setup request script @ [${setupRequestScriptPath}]`);
+
+  let workers;
+  if (process.env.TEST_WORKER_COUNT) {
+    workers = parseInt(process.env.TEST_WORKER_COUNT ?? `${DEFAULT_TEST_WORKER_COUNT}`, 10);
   }
-  logger.info(`Using API calls from JSON file @ [${apiCallsJSONPath}]`);
-  apiCalls = JSON.parse(await readFile(apiCallsJSONPath));
 
   // Execute the API calls with autocannon
-  logger.info(`starting executions against [${targetBaseURL}]...`);
+  logger.info(`starting autocannon executions against [${targetBaseURL}]...`);
   const results = await autocannon({
-    // workers: parseInt(process.env.TEST_WORKER_COUNT ?? `${DEFAULT_TEST_WORKER_COUNT}`, 10),
+    workers,
     url: targetBaseURL,
     bailout: 3,
-    duration: 30,
-    // amount: apiCalls.length,
-    requests: apiCalls.map(ac => ({
-      method: ac.method,
-      path: ac.path,
-      // onResponse: (status, body, context, headers) => {
-      //   logger.debug({ status }, "response!");
-      // },
-    })),
+    duration,
+    connections: 1,
+    requests: [
+      {
+        // If workers are being used, setup should be a path to require-able file,
+        // not the function actually contained therein.
+        // data sharing (ex. userCount) is done via ENV
+        setupRequest: workers ? setupRequestScriptPath : (await import(setupRequestScriptPath)).default,
+      },
+    ],
   });
 
   // Write JSON results to tmpdir

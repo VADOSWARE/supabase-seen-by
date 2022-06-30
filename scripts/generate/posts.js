@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { appendFile } from "node:fs/promises";
 import fastLoremIpsum from "fast-lorem-ipsum";
 
 const DEFAULT_POST_COUNT = 1000;
@@ -22,9 +22,9 @@ export async function generatePosts(args) {
 
   const titleCharacterCount = args.titleCharacterCount || DEFAULT_TITLE_CHARACTER_COUNT;
   const contentCharacterCount = args.contentCharacterCount || DEFAULT_CONTENT_CHARACTER_COUNT;
-  const outputFilePath = args.outputFilePath;
 
-  const posts = [];
+  const outputFilePath = args.outputFilePath;
+  if (!outputFilePath) { throw new Error("output file path must be specified"); }
 
   let creatorId;
   const first20 = userCount * 0.20;
@@ -42,20 +42,19 @@ export async function generatePosts(args) {
     }
     creatorId = Math.floor(creatorId);
 
-    posts.push({
+    const post = {
       id,
       title: fastLoremIpsum(titleCharacterCount, 'c'),
       content: fastLoremIpsum(contentCharacterCount, 'w'),
       main_image_src: `http://example.com/${fastLoremIpsum(10, 'w')}.png`,
       main_link_src: `http://example.com/${fastLoremIpsum(4, 'w')}?ref=supabook`,
       created_by: creatorId,
-    });
+    };
+
+    await appendFile(outputFilePath, `${JSON.stringify(post)}\n`);
   }
 
   // Write the entries to disk (returning nothing)
   if (outputFilePath) {
-    await writeFile(outputFilePath, JSON.stringify(posts), "utf8");
   }
-
-  return posts;
 }

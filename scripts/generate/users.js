@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { appendFile } from "node:fs/promises";
 import fastLoremIpsum from "fast-lorem-ipsum";
 
 const DEFAULT_USER_COUNT = 1000;
@@ -16,22 +16,21 @@ const DEFAULT_ABOUT_HTML_WORD_COUNT = 100;
 export async function generateUsers(args) {
   const count = args.count || DEFAULT_USER_COUNT;
   const aboutHTMLWordCount = args.aboutHTMLWordCount || DEFAULT_ABOUT_HTML_WORD_COUNT;
+
   const outputFilePath = args.outputFilePath;
-  const users = [];
+  if (!outputFilePath) { throw new Error("output file path must be specified"); }
 
   for (var id = 0; id < count; id++) {
-    users.push({
+    const user = {
       id,
       email: `user${id}@example.com`,
       name: `user ${id}`,
       about_html: fastLoremIpsum(aboutHTMLWordCount, 'w'),
-    });
-  }
+    };
 
-  // Write the entries to disk (returning nothing)
-  if (args.outputFilePath) {
-    await writeFile(outputFilePath, JSON.stringify(users), "utf8");
+    // Write the entries to disk (returning nothing)
+    if (args.outputFilePath) { 
+      await appendFile(outputFilePath, `${JSON.stringify(user)}\n`);
+    }
   }
-
-  return users;
 }
