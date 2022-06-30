@@ -66,7 +66,7 @@ export default async function runBenchmark() {
 
   // Load all user JSON (Ideally we'd use COPY here but slonik's copyFromBinary doesn't seem to work...)
   // @ 100k users this takes ~5m 30s
-  logger.info(`loading users from JSON file @ [${usersJSONPath}]`);
+  logger.info(`inserting users from JSON file @ [${usersJSONPath}]`);
   const userJSONFileStream = createReadStream(usersJSONPath);
   const userJSONLines = readline.createInterface({
     input: userJSONFileStream,
@@ -82,6 +82,7 @@ export default async function runBenchmark() {
       logger.error({ err, data: { line } }, "failed to parse line");
     }
   }
+  logger.info(`finished inserting users from JSON file @ [${usersJSONPath}]`);
 
   ///////////////////////////
   // Generate & load posts //
@@ -102,7 +103,7 @@ export default async function runBenchmark() {
 
   // Load all post JSON (Ideally we'd use COPY here but slonik's copyFromBinary doesn't seem to work...)
   // @ 100k posts this takes ~5m 30s
-  logger.info(`loading posts from JSON file @ [${postsJSONPath}]`);
+  logger.info(`inserting posts from JSON file @ [${postsJSONPath}]`);
   const postJSONFileStream = createReadStream(postsJSONPath);
   const postJSONLines = readline.createInterface({
     input: postJSONFileStream,
@@ -121,6 +122,7 @@ VALUES
       logger.error({ err, data: { line } }, "failed to parse line");
     }
   }
+  logger.info(`finished inserting posts from JSON file @ [${postsJSONPath}]`);
 
   //////////////
   // Run Test //
