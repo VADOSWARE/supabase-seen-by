@@ -43,6 +43,16 @@ You can change the tests with the following environment variables
 | `TEST_RECORD_SEEN_BY_COUNT` | `1000`           | How many times to *record* a "seen by" for posts (simulates a new view) |
 | `TEST_GET_SEEN_BY_COUNT`    | `2000`           | How many times to *request* a "seen by" reading (simulates a page load) |
 
+If you use [`direnv`][direnv], then your `.envrc` might look something like this:
+
+```bash
+export SEEN_BY_STRATEGY=simple-counter # or: simple-hstore, assoc-table, hll
+export TEST_USERS_JSON_PATH=/tmp/supabase-seen-by.users.json
+export TEST_POSTS_JSON_PATH=/tmp/supabase-seen-by.posts.json
+export TEST_POST_COUNT=1000
+export TEST_USER_COUNT=100000
+```
+
 ### Strategies
 
 Since this repo is about testing ways to solve the "seen by" problem here are the simple strategies we implemented:
@@ -115,3 +125,4 @@ This will run the tests script against your local database.
 [pnpm]: https://pnpm.io
 [gnu-make]: https://www.gnu.org/software/make
 [wiki-hll]: https://en.wikipedia.org/wiki/HyperLogLog
+[direnv]: https://direnv.net
