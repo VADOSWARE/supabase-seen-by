@@ -5,9 +5,8 @@ import { createReadStream } from "node:fs";
 import * as readline from "node:readline";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
-import esDirname from "es-dirname";
-import JSONStream from "JSONStream";
 
+import esDirname from "es-dirname";
 import { sql } from "slonik";
 import getLogger from "pino";
 import autocannon from "autocannon";
