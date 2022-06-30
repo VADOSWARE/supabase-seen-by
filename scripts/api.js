@@ -36,12 +36,26 @@ export async function buildAPI(args) {
   app.db = db; // Save the DB to the application
 
   // Retrieve the count and/or who has seen a given post
-  app.get('/posts/:postId/seen-by', async (req, res) => {
+  app.get('/posts/:postId/seen-by/count', async (req, res) => {
     const postId = req.params.postId;
     req.log.debug(`handling noitifications fetch for post with ID [${postId}]`);
 
     // Retrieve how many times (+/- by whom) an post has been seen
-    const seenBy = await seenByStrategy.getSeenByForPost({
+    const seenBy = await seenByStrategy.getSeenByCountForPost({
+      db,
+      postId: postId,
+    });
+
+    return seenBy;
+  });
+
+  // Retrieve the users who have seen a given post
+  app.get('/posts/:postId/seen-by/users', async (req, res) => {
+    const postId = req.params.postId;
+    req.log.debug(`handling noitifications fetch for post with ID [${postId}]`);
+
+    // Retrieve how many times (+/- by whom) an post has been seen
+    const seenBy = await seenByStrategy.getSeenByUsersForPost({
       db,
       postId: postId,
     });

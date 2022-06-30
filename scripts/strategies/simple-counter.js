@@ -2,17 +2,19 @@ import { sql } from "slonik";
 
 export async function build() {
   return {
-    getSeenByForPost: async (args) => {
+    getSeenByUsersForPost: async (args) => {
+      // This implementation is basic, fast, and wrong -- we'll never know *who* saw the post
+      return { users: {} };
+    },
+
+    getSeenByCountForPost: async (args) => {
       const { db, postId } = args;
       if (!postId) { throw new Error("Post ID not provided!"); }
 
-      const row = await db.maybeOne(sql`SELECT seen_count FROM posts WHERE id = ${postId}`);
-      if (!row) {
-        throw new Error(`Failed to find post with ID [${postId}]`);
-      }
+      let count = await db.maybeOneFirst(sql`SELECT seen_count FROM posts WHERE id = ${postId}`);
+      count = count ?? 0;
 
-      // This implementation is basic (and wrong) -- we'll never know *who* saw the post
-      return { count: row.seen_count, users: {} };
+      return { count };
     },
 
     recordSeenByForPost: async (args) => {

@@ -1,0 +1,7 @@
+BEGIN;
+
+ALTER TABLE posts DROP COLUMN seen_count_hll;
+
+DROP EXTENSION IF EXISTS hll;
+
+COMMIT;

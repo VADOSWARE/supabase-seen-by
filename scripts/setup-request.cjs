@@ -19,19 +19,23 @@ function setupRequest(request) {
   const postId = Math.floor(Math.random() * POST_COUNT);
 
   // Choose pseudo-randomly whether to register a seen by or read seenby status
-  const doRegisterSeenBy = Math.floor(Math.random() * 10) < 7;
-  if (doRegisterSeenBy) {
-    // Pick a random user to view
+  const operationChoice = Math.floor(Math.random() * 10);
+  if (operationChoice < 1) {
+    // 10% of the time, get *all* the users
+    request.method = "GET";
+    request.path = `/posts/${postId}/seen-by/users`;
+  } else if (operationChoice < 7) {
+    // 60% of the time, get the count of seenby on a post
+    request.method = "GET";
+    request.path = `/posts/${postId}/seen-by/count`;
+  } else {
+    // 30% of the time, add a new seen-by entry
     const userId = Math.floor(Math.random() * USER_COUNT);
 
     // Most of the time we'll be *setting* seen-by
     // And we'll get the count (so we can show it) later as well
     request.method = "POST";
     request.path = `/posts/${postId}/seen-by/${userId}`;
-  } else {
-    // A small amount of the time, we'll be getting the full list of people who have seen a post
-    request.method = "GET";
-    request.path = `/posts/${postId}/seen-by`;
   }
 
   return request;

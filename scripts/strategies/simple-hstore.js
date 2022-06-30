@@ -8,15 +8,12 @@ const sumNumericStrings = (arr) => {
 
 export async function build() {
   return {
-    getSeenByForPost: async (args) => {
+    getSeenByUsersForPost: async (args) => {
       const { db, postId } = args;
       if (!postId) { throw new Error("Post ID not provided!"); }
 
       const row = await db.maybeOne(sql`SELECT seen_count_hstore::jsonb AS seen_count_hstore_jsonb FROM posts WHERE id = ${postId}`);
-
-      if (!row) {
-        throw new Error(`Failed to find post with ID [${postId}]`);
-      }
+      if (!row) { return { users: {} }; }
 
       // Convert all the values to proper numbers
       // We're going to ignore using BigNum for now, and the possibility of doing this *inside* postgres)
@@ -25,8 +22,19 @@ export async function build() {
       }
 
       return {
-        count: Object.values(row.seen_count_hstore_jsonb).reduce((acc, v) => acc + v, 0),
         users: row.seen_count_hstore_jsonb,
+      };
+    },
+
+    getSeenByCountForPost: async (args) => {
+      const { db, postId } = args;
+      if (!postId) { throw new Error("Post ID not provided!"); }
+
+      const row = await db.maybeOne(sql`SELECT avals(seen_count_hstore) FROM posts WHERE id = ${postId}`);
+      if (!row) { throw new Error(`Failed to find post with ID [${postId}]`); }
+
+      return {
+        count: Object.values(row.avals).map(r => parseInt(r, 10)).reduce((acc, v) => acc + v, 0),
       };
     },
 

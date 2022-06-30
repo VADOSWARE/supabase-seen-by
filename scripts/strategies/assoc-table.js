@@ -8,20 +8,26 @@ const sumNumericStrings = (arr) => {
 
 export async function build() {
   return {
-    getSeenByForPost: async (args) => {
+    getSeenByUsersForPost: async (args) => {
       const { db, postId } = args;
       if (!postId) { throw new Error("Post ID not provided!"); }
 
-      const { rows } = await db.query(sql`SELECT * FROM posts_seen_by_users WHERE post_id = ${postId}`);
-
-      if (!rows) {
-        throw new Error(`Failed to find post with ID [${postId}]`);
-      }
+      const { rows } = db.query(sql`SELECT * FROM posts_seen_by_users WHERE post_id = ${postId}`);
+      if (!rows) { return { users: {} }; }
 
       return {
-        count: rows.reduce((acc, r) => acc + r.seen_count, 0),
         users: Object.fromEntries(rows.map(r => [r.user_id, r.seen_count])),
       };
+    },
+
+    getSeenByCountForPost: async (args) => {
+      const { db, postId } = args;
+      if (!postId) { throw new Error("Post ID not provided!"); }
+
+      let count = await db.maybeOneFirst(sql`SELECT SUM(seen_count) FROM posts_seen_by_users WHERE post_id = ${postId}`);
+      count = count ?? 0;
+
+      return { count };
     },
 
     recordSeenByForPost: async (args) => {

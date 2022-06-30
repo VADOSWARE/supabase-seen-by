@@ -3,11 +3,11 @@
 				ensure-tool-pnpm ensure-tool-node \
 # Tests
 				setup \
-				bench \
-				tests test-setup test-run test-extract-results \
+				bench bench-clean bench-all \
 # Local development/Debug
 				debug-api-server \
 # Local development DB
+				db-custom-image \
 				db-local db-local-setup db-local-stop db-local \
 				db-migration db-local-migrate db-local-revert \
 				db-local-psql
@@ -19,14 +19,13 @@ DOCKER ?= docker
 
 ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-
 DB_DATA_DIR ?= $(ROOT_DIR)output/postgres/data
 DB_INIT_SCRIPTS_DIR ?= $(ROOT_DIR)output/postgres/init-scripts
 DB_MIGRATIONS_DIR ?= $(ROOT_DIR)output/postgres/init-scripts
 
 DB_CONTAINER_NAME ?= "supaseenby-pg"
-DB_IMAGE ?= "postgres"
-DB_IMAGE_TAG ?= "14.4-alpine"
+DB_IMAGE ?= "postgres"  # custom image -> "postgres-14.4-alpine-hll"
+DB_IMAGE_TAG ?= "14.4-alpine" # custom image -> "latest"
 DB_USER_NAME ?= "supaseenby"
 DB_USER_PASSWORD ?= "supaseenby"
 DB_NAME ?= "supaseenby"
@@ -34,7 +33,7 @@ DB_PORT ?= 5432
 DB_HOST ?= localhost
 DB_URL ?= "postgres://$(DB_USER_NAME):$(DB_USER_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
 
-all: setup tests
+all: setup bench-all
 
 ###########
 # Tooling #
@@ -56,34 +55,27 @@ ifeq ("","$(shell which $(DOCKER))")
 endif
 
 #########
-# Setup #
+# Tests #
 #########
 
 setup: ensure-tool-pnpm
 	$(PNPM) install
 
 bench:
-	echo -e "=> running benchmarks..."
+	echo -e "=> running benchmarks (local DB should be setup & running)..."
 	@DB_URL=$(DB_URL) \
 		$(PNPM) bench
 
-#########
-# Tests #
-#########
+bench-clean:
+	@echo -e "=> Run the following to clean out test bench. BE CAREFUL"
+	@echo -e "==> rm $(TEST_USERS_JSON_PATH)"
+	@echo -e "==> rm $(TEST_POSTS_JSON_PATH)"
 
-tests: test-db-setup test-script-run text-extract-results
-
-test-setup:
-	echo -e "=> setting up for test..."
-	$(error "NOT IMPLEMENTED")
-
-test-run:
-	echo -e "=> running test..."
-	$(error "NOT IMPLEMENTED")
-
-test-extract-results:
-	echo -e "=> extracting results from test..."
-	$(error "NOT IMPLEMENTED")
+bench-all:
+	$(MAKE) -S --no-print-directory bench SEEN_BY_STRATEGY=simple-counter > ./simple-counter.bench.log
+	$(MAKE) -S --no-print-directory bench SEEN_BY_STRATEGY=simple-hstore > ./simple-hstore.bench.log
+	$(MAKE) -S --no-print-directory bench SEEN_BY_STRATEGY=assoc-table > ./assoc-table.bench.log
+	$(MAKE) -S --no-print-directory bench SEEN_BY_STRATEGY=hll > ./hll.bench.log
 
 #####################
 # Local development #
@@ -92,6 +84,9 @@ test-extract-results:
 ##########################
 # Local development - DB #
 ##########################
+
+db-custom-image:
+	$(DOCKER) build -t $(DB_IMAGE) -f ./postgres14.4-hll.Dockerfile  .
 
 db-local-setup:
 	mkdir -p $(DB_DATA_DIR)
@@ -104,7 +99,7 @@ db-local-stop:
 	fi
 
 ### Start a local DB for the API only
-db-local: db-local-stop db-local-setup
+db-local: db-local-stop
 	@echo -e "Running local DB...\n\n"
 	$(DOCKER) run --rm \
 		$(DOCKER_OPTS) \

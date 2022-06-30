@@ -45,6 +45,7 @@ export default async function runBenchmark() {
   const tmpdir = await mkdtemp(path.join(os.tmpdir(), "supabase-seen-by-"));
 
   // Clear out existing tables ahead of time
+  // TODO: more efficient reset -- posts/users don't need to be reset if already loaded
   await api.db.query(sql`TRUNCATE posts, users, posts_seen_by_users;`);
 
   ///////////////////////////

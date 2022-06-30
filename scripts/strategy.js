@@ -24,7 +24,8 @@ const DEFAULT_SEEN_BY_STRATEGY = SEEN_BY_STRATEGY_NAME.SimpleCounter;
 export class SeenByStrategy {
   constructor(args) {
     if (!args) { throw new TypeError("SeenByStrategy must be constructed with args"); }
-    this.getSeenByForPost = args.getSeenByForPost;
+    this.getSeenByUsersForPost = args.getSeenByUsersForPost;
+    this.getSeenByCountForPost = args.getSeenByCountForPost;
     this.recordSeenByForPost = args.recordSeenByForPost;
   }
 }

@@ -51,6 +51,12 @@ export TEST_USERS_JSON_PATH=/tmp/supabase-seen-by.users.json
 export TEST_POSTS_JSON_PATH=/tmp/supabase-seen-by.posts.json
 export TEST_POST_COUNT=1000
 export TEST_USER_COUNT=100000
+export TEST_DURATION_SECONDS=60
+
+## Use custom postgres image built with hll extension (https://github.com/citusdata/postgresql-hll)
+## NOTE: `make db-custom-image` must be run beforehand
+#export DB_IMAGE=postgres-14.4-alpine-hll
+#export DB_IMAGE_TAG=latest
 ```
 
 ### Strategies
@@ -64,8 +70,6 @@ Since this repo is about testing ways to solve the "seen by" problem here are th
 | `assoc`             | Use an associative table, `SUM(*)`ing as necessary                                   |
 | `assoc+hyperloglog` | Use a [HyperLogLog][wiki-hll] column for seen-by, with raw data in associative table |
 
-
-
 ## Development
 
 If you're interested in improving/modifying this project, here are a few tips to get you started
@@ -75,6 +79,14 @@ If you're interested in improving/modifying this project, here are a few tips to
 The code can be edited however you'd like -- with whatever tools you'd like
 
 ### Working with a local DB
+
+First, we must build the local DB:
+
+```console
+$ make db-local-setup
+```
+
+This will build the
 
 You can do various operations with the local DB, for example starting it:
 
