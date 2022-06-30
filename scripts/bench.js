@@ -1,7 +1,7 @@
 import * as process from "process";
 import * as path from "path";
 import * as os from "os";
-import { createReadStream } from "node:fs";
+import { createReadStream, existsSync } from "node:fs";
 import * as readline from "node:readline";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
@@ -55,9 +55,9 @@ export default async function runBenchmark() {
   // FUTURE: reduce to PG-only w/ generate_series
   let users;
   let usersJSONPath = process.env.TEST_USERS_JSON_PATH;
-  if (!usersJSONPath) {
-    usersJSONPath = path.join(tmpdir, "users.json");
-    logger.info(`TEST_USERS_JSON_PATH not specified, generating user seed list @ [${usersJSONPath}]`);
+  if (!usersJSONPath || !existsSync(usersJSONPath)) {
+    if (!usersJSONPath) { usersJSONPath = path.join(tmpdir, "users.json"); }
+    logger.info(`TEST_USERS_JSON_PATH not specified or empty, generating user seed list @ [${usersJSONPath}]`);
     await generateUsers({
       count: process.env.TEST_USER_COUNT ? parseInt(process.env.TEST_USER_COUNT, 10) : undefined,
       outputFilePath: usersJSONPath,
@@ -92,8 +92,9 @@ export default async function runBenchmark() {
   // FUTURE: reduce to PG-only w/ generate_series
   let posts;
   let postsJSONPath = process.env.TEST_POSTS_JSON_PATH;
-  if (!postsJSONPath) {
-    postsJSONPath = path.join(tmpdir, "posts.json");
+  if (!postsJSONPath || !existsSync(postsJSONPath)) {
+    if (!postsJSONPath) { postsJSONPath = path.join(tmpdir, "posts.json"); }
+    logger.info(`TEST_POSTS_JSON_PATH not specified or empty, generating post seed list @ [${postsJSONPath}]`);
     await generatePosts({
       userCount: process.env.TEST_USER_COUNT ? parseInt(process.env.TEST_USER_COUNT, 10) : undefined,
       postCount: process.env.TEST_POST_COUNT ? parseInt(process.env.TEST_POST_COUNT, 10) : undefined,
